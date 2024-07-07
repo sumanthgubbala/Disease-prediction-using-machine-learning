@@ -79,7 +79,7 @@ def predictdisease(symptoms):
 #print(predictdisease("Vomiting"))
 
 
-st.title("Disease Prediction Based on Symptoms")
+st.title("Disease Prediction Based on Symptoms 🧑‍⚕️")
 
 symptoms_input = st.text_input("Enter symptoms separated by commas (e.g., 'Stomach Pain, Vomiting, Weight Loss')")
 
