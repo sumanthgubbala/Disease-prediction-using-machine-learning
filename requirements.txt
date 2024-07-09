@@ -1,4 +1,4 @@
 scikit-learn
-scip
+scipy
 numpy
 joblib
