@@ -14,9 +14,9 @@ warnings.filterwarnings("ignore", category=FutureWarning, message="Unlike other 
 warnings.filterwarnings("ignore", category=DeprecationWarning, message="Support for non-numeric arrays")
 
 # Load models
-svm_model = joblib.load("svc_model.joblib")
-nb_model = joblib.load("rf_model.joblib")
-rf_model = joblib.load("nb_model.joblib")
+svm_model = joblib.load("./svc_model.joblib")
+nb_model = joblib.load("./rf_model.joblib")
+rf_model = joblib.load("./nb_model.joblib")
 
 df=pd.read_csv("./datasets/Testing.csv").dropna(axis=1)
 encoder=LabelEncoder()
@@ -25,9 +25,6 @@ encoder.fit_transform(df["prognosis"])
 X=df.iloc[:,:-1]
 
 symptoms =X.columns.values
-
-
-
 
 symptom_index={}
 
@@ -45,38 +42,40 @@ data_dict={
 # Output: Generated predictions by models
 
 def predictdisease(symptoms):
-    # Converting the input string to a list of symptoms
-    symptoms=symptoms.split(",")
+    # Converting the input string to a list of symptoms and trimming spaces
+    symptoms = [symptom.strip() for symptom in symptoms.split(",")]
 
-    input_data=[0]*len(data_dict["symptoms_index"])
+    input_data = [0] * len(data_dict["symptoms_index"])
     for symptom in symptoms:
-        index = data_dict["symptoms_index"][symptom]
-        input_data[index]=1
+        index = data_dict["symptoms_index"].get(symptom)
+        if index is not None:
+            input_data[index] = 1
+        else:
+            # Handle case where symptom is not found in symptom_index
+            raise KeyError(f"Symptom '{symptom}' not found in the dataset.")
+
+    input_data = np.array(input_data).reshape(1, -1)
     
-
-    input_data=np.array(input_data).reshape(1,-1)
     # Predicting the disease using the trained model
+    rf_predicton = data_dict["predictions_classes"][rf_model.predict(input_data)[0]]
+    nb_prediction = data_dict["predictions_classes"][nb_model.predict(input_data)[0]]
+    svm_prediction = data_dict["predictions_classes"][svm_model.predict(input_data)[0]]
 
-    rf_predicton =data_dict["predictions_classes"][rf_model.predict(input_data)[0]]
-    nb_prediction =data_dict["predictions_classes"][nb_model.predict(input_data)[0]]
-    svm_prediction =data_dict["predictions_classes"][svm_model.predict(input_data)[0]]
-
+    # Determine final prediction based on the most frequent prediction
     predictions = [rf_predicton, nb_prediction, svm_prediction]
     values, counts = np.unique(predictions, return_counts=True)
     final_prediction = values[np.argmax(counts)]
-    #final_prediction= mode([rf_predicton,nb_prediction,svm_prediction])[0][0]
 
-    predictions={
-        "Random Forest":rf_predicton,
-        "Naive Bayes":nb_prediction,
-        "Support Vector Machine":svm_prediction,
-        "final_prediction":final_prediction
-
+    return {
+        "Random Forest": rf_predicton,
+        "Naive Bayes": nb_prediction,
+        "Support Vector Machine": svm_prediction,
+        "final_prediction": final_prediction
     }
-    return predictions
 
 
-#print(predictdisease("Vomiting"))
+
+print(predictdisease("Vomiting"))
 
 
 st.title("Disease Prediction Based on Symptoms 🧑‍⚕️")
